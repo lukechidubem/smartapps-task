@@ -12,7 +12,7 @@ import { otpMail } from '../emailTemplates/otp';
 import filterObject from '../utils/filterObject';
 import mailService = require('../services/mailer');
 import { welcomeMail } from '../emailTemplates/welcome';
-import cloudinary from '../utils/cloudinary';
+import { cloudinary } from '../utils/cloudinary';
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
@@ -80,13 +80,13 @@ const resizeUserPhoto = catchAsync(
       return next(new AppError('Please upload an image file', 400));
     }
 
-    req.file.filename = `user-${Math.random()}-${Date.now()}.jpeg`;
+    req.file.filename = `user-${Date.now()}.jpeg`;
 
     await sharp(req.file.buffer)
       .resize(500, 500)
       .toFormat('jpeg')
       .jpeg({ quality: 90 })
-      .toFile(`public/img/${req.file.filename}`);
+      .toFile(`src/public/img/${req.file.filename}`);
 
     next();
   }
@@ -101,17 +101,18 @@ const signup = catchAsync(
       return next(new AppError('Please upload an image file', 400));
     }
 
-    const name = req.body.fileName;
+    const name = req.body.firstName;
 
     const fileName = `${name}-${Date.now()}`;
 
     const result = await cloudinary.uploader.upload(
-      `public/img/${req.file.filename}`,
+      `src/public/img/${req.file.filename}`,
       {
         folder: `my-folder/${fileName}`,
       }
     );
 
+    console.log('Here', result);
     const filteredBody = filterObject(
       req.body,
       'firstName',
@@ -123,7 +124,7 @@ const signup = catchAsync(
 
     filteredBody.photo = result.secure_url;
 
-    fs.unlink(`public/img/${req.file.filename}`, (err: any) => {
+    fs.unlink(`src/public/img/${req.file.filename}`, (err: any) => {
       if (err) console.error(err);
     });
 
